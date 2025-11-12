@@ -24,6 +24,8 @@ import ListaTurmas from './pages/ListaTurmas';
 import DetalheTurma from './pages/DetalheTurma';
 import AdicionarTurma from './pages/AdicionarTurma';
 import AdicionarAluno from './pages/AdicionarAluno';
+import EditarAdvertencia from './pages/EditarAdvertencia';
+import EditarSuspensao from './pages/EditarSuspensao';
 
 // Imports da Biblioteca
 import ListaLivros from './pages/ListaLivros';
@@ -42,9 +44,10 @@ import GerenciarMaterias from './pages/GerenciarMaterias';
 import AdicionarMateria from './pages/AdicionarMateria'; 
 import GerenciarProfessores from './pages/GerenciarProfessores';
 import AdicionarProfessor from './pages/AdicionarProfessor';
-// --- ADICIONANDO PÁGINAS QUE FALTAVAM NO SEU ARQUIVO ORIGINAL ---
 import LancarFrequencia from './pages/LancarFrequencia';
 import LancarNotas from './pages/LancarNotas';
+import AdicionarAdvertencia from './pages/AdicionarAdvertencia';
+import AdicionarSuspensao from './pages/AdicionarSuspensao';
 
 // --- ADICIONEI AQUI A PÁGINA DE RESERVAS ---
 import Reservas from './pages/Reservas';
@@ -168,6 +171,10 @@ function App() {
             <Route path="materiais/adicionar" element={<AdicionarMaterial />} />
             <Route path="materias" element={<GerenciarMaterias />} /> 
             <Route path="materias/adicionar" element={<AdicionarMateria />} /> 
+            <Route path="/adicionar-advertencia" element={<AdicionarAdvertencia />} />
+            <Route path="/adicionar-suspensao" element={<AdicionarSuspensao />} />
+            <Route path="/editar-advertencia/:id" element={<EditarAdvertencia />} />
+            <Route path="/editar-suspensao/:id" element={<EditarSuspensao />} />
 
             {/* --- ADICIONEI A ROTA DE RESERVAS AQUI --- */}
             <Route path="reservas" element={<Reservas />} />
