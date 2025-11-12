@@ -63,21 +63,20 @@ class AlunoCreateSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(write_only=True, required=True)
     email = serializers.EmailField(write_only=True, required=False, allow_blank=True)
     cpf = serializers.CharField(write_only=True, required=True)
-    
-    # --- 2. CAMPO DE SENHA REMOVIDO DOS 'fields' OBRIGATÓRIOS ---
-    # (Não precisamos mais do 'password' vindo do frontend)
+    responsavel = serializers.PrimaryKeyRelatedField(
+        queryset=Responsavel.objects.all(), write_only=True, required=True,
+        help_text="Selecione o responsável pelo aluno"
+    )
 
-    # --- 3. CAMPO PARA RETORNAR A SENHA GERADA ---
     temp_password = serializers.CharField(read_only=True)
 
     class Meta:
         model = Aluno
         fields = [
             'cpf', 'first_name', 'last_name', 'email', 
-            'turma', 'status', 
-            'temp_password' # <-- Adicionado para o retorno
+            'turma', 'status', 'responsavel',
+            'temp_password'
         ]
-        # Remove 'password' dos fields
 
     def validate_cpf(self, value):
         if Usuario.objects.filter(username=value).exists():
@@ -85,27 +84,21 @@ class AlunoCreateSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        # --- 4. LÓGICA DE GERAR SENHA ---
-        
-        # Gera uma senha aleatória de 8 dígitos (ex: 12345678)
         temp_password = ''.join(random.choices(string.digits, k=8))
-        
+        responsavel = validated_data.pop('responsavel')
         user_data = {
             'username': validated_data.pop('cpf'),
-            'password': make_password(temp_password), # <-- Usa a senha gerada
+            'password': make_password(temp_password),
             'first_name': validated_data.pop('first_name'),
             'last_name': validated_data.pop('last_name'),
             'email': validated_data.pop('email', ''),
             'cargo': 'aluno'
         }
-        
         user = Usuario.objects.create(**user_data)
-        
         aluno = Aluno.objects.create(usuario=user, **validated_data)
-        
-        # Anexa a senha temporária ao objeto 'aluno' para o serializer poder lê-la
+        # Adiciona o aluno ao responsável selecionado
+        responsavel.alunos.add(aluno)
         aluno.temp_password = temp_password
-        
         return aluno
 
 

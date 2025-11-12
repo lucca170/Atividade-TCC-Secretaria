@@ -39,22 +39,31 @@ function AdicionarAluno() {
   const [status, setStatus] = useState('ativo');
   
   const [turmas, setTurmas] = useState([]); 
+  const [responsaveis, setResponsaveis] = useState([]);
+  const [responsavelId, setResponsavelId] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const token = localStorage.getItem('authToken');
-  
   // --- 3. ESTADO DE SUBMISSÃO ---
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Busca a lista de turmas
+  // Busca a lista de turmas e responsáveis
   useEffect(() => {
     const apiUrlTurmas = 'http://127.0.0.1:8000/pedagogico/api/turmas/';
+    const apiUrlResponsaveis = 'http://127.0.0.1:8000/pedagogico/api/responsaveis/';
     axios.get(apiUrlTurmas, { headers: { 'Authorization': `Token ${token}` } })
       .then(response => {
         setTurmas(response.data);
       })
-      .catch(err => {
+      .catch(() => {
         setError('Não foi possível carregar a lista de turmas.');
+      });
+    axios.get(apiUrlResponsaveis, { headers: { 'Authorization': `Token ${token}` } })
+      .then(response => {
+        setResponsaveis(response.data);
+      })
+      .catch(() => {
+        setError('Não foi possível carregar a lista de responsáveis.');
       });
   }, [token]);
 
@@ -71,6 +80,7 @@ function AdicionarAluno() {
       cpf: cpf, 
       turma: parseInt(turmaId),
       status: status,
+      responsavel: parseInt(responsavelId),
     };
 
     try {
@@ -164,12 +174,30 @@ function AdicionarAluno() {
               value={turmaId}
               label="Turma"
               onChange={(e) => setTurmaId(e.target.value)}
-              disabled={isSubmitting || !!success} // <-- Desabilita após sucesso
+              disabled={isSubmitting || !!success}
             >
               <MenuItem value=""><em>Selecione a turma</em></MenuItem>
               {turmas.map((turma) => (
                 <MenuItem key={turma.id} value={turma.id}>
                   {turma.nome} ({turma.turno_display})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin="normal" required>
+            <InputLabel id="responsavel-label">Responsável</InputLabel>
+            <Select
+              labelId="responsavel-label"
+              value={responsavelId}
+              label="Responsável"
+              onChange={(e) => setResponsavelId(e.target.value)}
+              disabled={isSubmitting || !!success}
+            >
+              <MenuItem value=""><em>Selecione o responsável</em></MenuItem>
+              {responsaveis.map((resp) => (
+                <MenuItem key={resp.id} value={resp.id}>
+                  {resp.usuario.first_name} {resp.usuario.last_name} ({resp.usuario.username})
                 </MenuItem>
               ))}
             </Select>
