@@ -41,7 +41,7 @@ function Dashboard() {
           Descubra um ambiente de aprendizado inovador e inspirador.
         </Typography>
         
-        <Button variant="contained" color="secondary" size="large" component={RouterLink} to="/eventos">
+        <Button variant="contained" color="secondary" size="large" component={RouterLink} to="/calendario">
           Agende sua visita →
         </Button>
       </Container>
