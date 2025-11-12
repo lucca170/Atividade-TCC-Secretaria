@@ -1,4 +1,4 @@
-// Em: frontend/src/pages/AdicionarAdvertencia.jsx 
+// Em: frontend/src/pages/AdicionarAdvertencia.jsx (NOVO ARQUIVO)
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -39,9 +39,13 @@ function AdicionarAdvertencia() {
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingAlunos, setLoadingAlunos] = useState(true);
+  const [alunoIdFromUrl, setAlunoIdFromUrl] = useState(null);
+  const [alunoNome, setAlunoNome] = useState('');
 
-  // Busca a lista de todos os alunos para o <Select>
   useEffect(() => {
+    const alunoIdFromQuery = query.get('alunoId');
+    console.log('alunoIdFromQuery:', alunoIdFromQuery);
+    
     const fetchAlunos = async () => {
       setLoadingAlunos(true);
       try {
@@ -49,12 +53,19 @@ function AdicionarAdvertencia() {
         const response = await axios.get(apiUrl, {
           headers: { 'Authorization': `Token ${token}` }
         });
-        setAlunos(response.data);
         
-        // Verifica se um ID de aluno foi passado pela URL
-        const alunoIdFromQuery = query.get('alunoId');
         if (alunoIdFromQuery) {
+          console.log('Definindo alunoIdFromUrl para:', alunoIdFromQuery);
+          setAlunoIdFromUrl(alunoIdFromQuery);
           setAlunoId(alunoIdFromQuery);
+          const alunoSelecionado = response.data.find(aluno => aluno.id === parseInt(alunoIdFromQuery));
+          console.log('Aluno selecionado:', alunoSelecionado);
+          if (alunoSelecionado) {
+            setAlunos([alunoSelecionado]);
+            setAlunoNome(alunoSelecionado.nome);
+          }
+        } else {
+          setAlunos(response.data);
         }
         
       } catch (err) {
@@ -117,22 +128,32 @@ function AdicionarAdvertencia() {
         </Typography>
         <Box component="form" onSubmit={handleSubmit}>
           
-          <FormControl fullWidth margin="normal" required disabled={loadingAlunos}>
-            <InputLabel id="aluno-label">Aluno</InputLabel>
-            <Select
-              labelId="aluno-label"
-              value={alunoId}
+          {alunoIdFromUrl ? (
+            <TextField
               label="Aluno"
-              onChange={(e) => setAlunoId(e.target.value)}
-            >
-              {loadingAlunos && <MenuItem value=""><em>Carregando alunos...</em></MenuItem>}
-              {alunos.map((aluno) => (
-                <MenuItem key={aluno.id} value={aluno.id}>
-                  {aluno.nome} (Turma: {aluno.turma_nome})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+              value={alunoNome}
+              disabled
+              fullWidth
+              margin="normal"
+            />
+          ) : (
+            <FormControl fullWidth margin="normal" required disabled={loadingAlunos}>
+              <InputLabel id="aluno-label">Aluno</InputLabel>
+              <Select
+                labelId="aluno-label"
+                value={alunoId}
+                label="Aluno"
+                onChange={(e) => setAlunoId(e.target.value)}
+              >
+                {loadingAlunos && <MenuItem value=""><em>Carregando alunos...</em></MenuItem>}
+                {alunos.map((aluno) => (
+                  <MenuItem key={aluno.id} value={aluno.id}>
+                    {aluno.nome} (Turma: {aluno.turma_nome})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
           
           <TextField
             label="Data da Ocorrência"

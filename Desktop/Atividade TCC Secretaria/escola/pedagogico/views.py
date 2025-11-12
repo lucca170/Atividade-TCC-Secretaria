@@ -370,21 +370,17 @@ def relatorio_desempenho_aluno(request, aluno_id):
     )
 
     context = {
-        'aluno': {
-            'nome': aluno.usuario.get_full_name() or aluno.usuario.username,
-            'turma': {
-                'id': aluno.turma.id if aluno.turma else None,
-                'nome': aluno.turma.nome if aluno.turma else 'Sem turma'
-            },
-            'status': aluno.get_status_display()
-        },
+        'id': aluno.id,
+        'nome': aluno.usuario.get_full_name() or aluno.usuario.username,
+        'matricula': aluno.matricula,
+        'turma': aluno.turma.id if aluno.turma else None,
+        'turma_nome': aluno.turma.nome if aluno.turma else 'Sem turma',
+        'responsavel_nome': aluno.responsavel.usuario.get_full_name() if aluno.responsavel else 'N/A',
+        'responsavel_email': aluno.responsavel.usuario.email if aluno.responsavel else 'N/A',
+        'status': aluno.get_status_display(),
         'medias_disciplinas': list(medias_disciplinas), 
-        'faltas': {
-            'count': faltas.count()
-        },
-        'presencas': {
-            'count': presencas.count()
-        }
+        'total_faltas': faltas.count(),
+        'total_presencas': presencas.count()
     }
 
     return Response(context)

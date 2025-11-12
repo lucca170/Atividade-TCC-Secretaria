@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -22,16 +22,20 @@ function EditarAdvertencia() {
   const navigate = useNavigate();
   const { id } = useParams(); // Pega o ID da advertência da URL
   const token = localStorage.getItem('authToken');
+  
+  // Estados do formulário
   const [alunoId, setAlunoId] = useState('');
   const [data, setData] = useState('');
   const [motivo, setMotivo] = useState('');
   const [alunoNome, setAlunoNome] = useState(''); // Para exibir o nome
+  
+  // Estados de controle
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // API URL
+  // API URL para o item específico
   const apiUrl = `http://127.0.0.1:8000/disciplinar/api/advertencias/${id}/`;
 
   // Busca os dados da advertência existente
@@ -44,7 +48,7 @@ function EditarAdvertencia() {
         });
         const { aluno, aluno_nome, data, motivo } = response.data;
         setAlunoId(aluno);
-        setData(data);
+        setData(data); // A API deve retornar a data no formato YYYY-MM-DD
         setMotivo(motivo);
         setAlunoNome(aluno_nome || 'Aluno');
       } catch (err) {
@@ -70,6 +74,7 @@ function EditarAdvertencia() {
     };
 
     try {
+      // Usa o método PUT para atualizar
       await axios.put(apiUrl, advertenciaData, {
         headers: { 'Authorization': `Token ${token}` }
       });
@@ -77,6 +82,7 @@ function EditarAdvertencia() {
       setSuccess('Advertência atualizada com sucesso! Redirecionando...');
       setIsSubmitting(false);
       
+      // Volta para o relatório do aluno
       setTimeout(() => {
         navigate(`/relatorio/aluno/${alunoId}`);
       }, 2000);

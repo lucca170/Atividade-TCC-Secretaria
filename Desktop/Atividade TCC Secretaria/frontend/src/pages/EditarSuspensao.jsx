@@ -48,8 +48,8 @@ function EditarSuspensao() {
         });
         const { aluno, aluno_nome, data_inicio, data_fim, motivo } = response.data;
         setAlunoId(aluno);
-        setDataInicio(data_inicio);
-        setDataFim(data_fim);
+        setDataInicio(data_inicio); // Formato YYYY-MM-DD
+        setDataFim(data_fim);     // Formato YYYY-MM-DD
         setMotivo(motivo);
         setAlunoNome(aluno_nome || 'Aluno');
       } catch (err) {
@@ -75,6 +75,7 @@ function EditarSuspensao() {
     };
 
     try {
+      // Usa o método PUT para atualizar
       await axios.put(apiUrl, suspensaoData, {
         headers: { 'Authorization': `Token ${token}` }
       });
@@ -82,6 +83,7 @@ function EditarSuspensao() {
       setSuccess('Suspensão atualizada com sucesso! Redirecionando...');
       setIsSubmitting(false);
       
+      // Volta para o relatório do aluno
       setTimeout(() => {
         navigate(`/relatorio/aluno/${alunoId}`);
       }, 2000);

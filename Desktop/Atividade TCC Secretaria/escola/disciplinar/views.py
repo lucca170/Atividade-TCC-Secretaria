@@ -1,7 +1,6 @@
 from rest_framework import viewsets, permissions
 from .models import Advertencia, Suspensao
 from .serializers import AdvertenciaSerializer, SuspensaoSerializer
-# --- 1. IMPORTAR A PERMISSÃO QUE FALTAVA ---
 from escola.base.permissions import IsCoordenacao, IsProfessor, IsAluno, IsResponsavel
 
 class AdvertenciaViewSet(viewsets.ModelViewSet):
@@ -16,10 +15,11 @@ class AdvertenciaViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """ Define permissões baseadas na ação. """
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            # Apenas Coordenação pode criar, editar ou deletar
             permission_classes = [permissions.IsAuthenticated, IsCoordenacao]
         else: # list, retrieve
-            # --- 2. ADICIONAR IsResponsavel AQUI ---
-            permission_classes = [permissions.IsAuthenticated, (IsCoordenacao | IsProfessor | IsAluno | IsResponsavel)]
+            # Todos autenticados podem listar e visualizar
+            permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
@@ -42,17 +42,16 @@ class AdvertenciaViewSet(viewsets.ModelViewSet):
             else:
                 return queryset.none() 
         
-        # --- 3. ADICIONAR LÓGICA DE FILTRO PARA O RESPONSÁVEL ---
+        # Responsável só pode ver os seus alunos
         if user.cargo == 'responsavel':
-            if not aluno_id: # Se o responsável tentar ver /api/advertencias/ sem filtro de aluno
+            if not aluno_id:
                 return queryset.none()
             try:
-                # Confirma que o aluno_id solicitado pertence a este responsável
                 if user.responsavel_profile.alunos.filter(id=aluno_id).exists():
-                    return queryset # O queryset já está filtrado pelo aluno_id (linha 35)
+                    return queryset
                 else:
-                    return queryset.none() # O aluno não é deste responsável
-            except: # (ex: Responsavel.DoesNotExist)
+                    return queryset.none()
+            except:
                 return queryset.none()
         
         # Admin, Professor, etc. (já filtrado por aluno_id, se fornecido)
@@ -68,10 +67,11 @@ class SuspensaoViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """ Define permissões baseadas na ação. """
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            # Apenas Coordenação pode criar, editar ou deletar
             permission_classes = [permissions.IsAuthenticated, IsCoordenacao]
         else:
-            # --- 4. ADICIONAR IsResponsavel AQUI ---
-            permission_classes = [permissions.IsAuthenticated, (IsCoordenacao | IsProfessor | IsAluno | IsResponsavel)]
+            # Todos autenticados podem listar e visualizar
+            permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
@@ -94,16 +94,15 @@ class SuspensaoViewSet(viewsets.ModelViewSet):
             else:
                 return queryset.none()
                 
-        # --- 5. ADICIONAR LÓGICA DE FILTRO PARA O RESPONSÁVEL ---
+        # Responsável só pode ver os seus alunos
         if user.cargo == 'responsavel':
-            if not aluno_id: # Se o responsável tentar ver /api/suspensoes/ sem filtro de aluno
+            if not aluno_id:
                  return queryset.none()
             try:
-                # Confirma que o aluno_id solicitado pertence a este responsável
                 if user.responsavel_profile.alunos.filter(id=aluno_id).exists():
-                    return queryset # O queryset já está filtrado pelo aluno_id
+                    return queryset
                 else:
-                    return queryset.none() # O aluno não é deste responsável
+                    return queryset.none()
             except:
                 return queryset.none()
 
