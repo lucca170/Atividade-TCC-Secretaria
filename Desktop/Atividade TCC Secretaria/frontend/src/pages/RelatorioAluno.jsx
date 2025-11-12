@@ -1,4 +1,4 @@
-// Em: frontend/src/pages/RelatorioAluno.jsx (MODIFICADO)
+// Em: frontend/src/pages/RelatorioAluno.jsx (CORRIGIDO COM DOWNLOAD AUTENTICADO)
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom'; 
@@ -29,7 +29,7 @@ import AddCommentIcon from '@mui/icons-material/AddComment';
 import BlockIcon from '@mui/icons-material/Block';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-
+import DownloadIcon from '@mui/icons-material/Download'; 
 
 // Função para buscar o cargo do usuário logado
 const getUserRole = () => {
@@ -43,10 +43,6 @@ const getUserRole = () => {
 
 // Roles que podem editar notas (Professor ou Admin)
 const canEditRoles = ['administrador', 'coordenador', 'diretor', 'ti', 'professor'];
-
-// ## ATENÇÃO AQUI ##
-// Esta é a lista que controla quem vê os botões de Adicionar/Editar/Excluir
-// Adicione outros cargos do seu 'base/models.py' aqui se necessário (ex: 'professor')
 const adminRoles = ['administrador', 'coordenador', 'diretor', 'ti'];
 
 
@@ -83,9 +79,14 @@ function RelatorioAluno() {
 
     // Estado para Diálogo de Exclusão
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState(null); // { id: null, type: '' }
+    const [itemToDelete, setItemToDelete] = useState(null); 
     const [deleteError, setDeleteError] = useState('');
     const [deleteSuccess, setDeleteSuccess] = useState('');
+
+    // --- 1. ESTADOS PARA O BOTÃO DE PDF ---
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [pdfError, setPdfError] = useState('');
+    // --- FIM ---
 
     // Função para buscar dados disciplinares (Advert/Suspens)
     const fetchDisciplinar = useCallback(async () => {
@@ -114,7 +115,7 @@ function RelatorioAluno() {
 
     // useEffect principal (Busca dados do Aluno + Disciplinares)
     useEffect(() => {
-        setUserRole(getUserRole()); // Pega o cargo do usuário
+        setUserRole(getUserRole()); 
         
         if (!token) {
             setError('Token de autenticação não encontrado.');
@@ -132,11 +133,8 @@ function RelatorioAluno() {
         const fetchDadosIniciais = async () => {
             try {
                 const headers = { 'Authorization': `Token ${token}` };
-                // Busca dados do relatório do aluno
                 const resRelatorio = await axios.get(apiUrlRelatorio, { headers });
                 setAlunoData(resRelatorio.data);
-                
-                // Busca dados disciplinares
                 await fetchDisciplinar();
 
             } catch (err) {
@@ -154,7 +152,7 @@ function RelatorioAluno() {
         };
         
         fetchDadosIniciais();
-    }, [alunoId, token, fetchDisciplinar]); // Dependências
+    }, [alunoId, token, fetchDisciplinar]); 
 
     // Função para buscar as notas
     const fetchNotas = useCallback(() => {
@@ -165,15 +163,22 @@ function RelatorioAluno() {
         
         axios.get(apiUrlNotas, { headers: { 'Authorization': `Token ${token}` } })
             .then(response => {
-                // Organiza as notas por matéria para fácil exibição
                 const notasPorMateria = response.data.reduce((acc, nota) => {
-                    const materiaNome = nota.materia_nome || 'Matéria Desconhecida';
+                    const materiaNome = nota.disciplina_nome || 'Matéria Desconhecida';
                     if (!acc[materiaNome]) {
                         acc[materiaNome] = { N1: '', N2: '', N3: '', N4: '', Media: '' };
                     }
-                    acc[materiaNome][`N${nota.bimestre}`] = nota.nota;
                     
-                    // Cálculo simples de média (idealmente viria do backend)
+                    let bimestreKey = '';
+                    if (nota.bimestre === '1º Bimestre') bimestreKey = 'N1';
+                    else if (nota.bimestre === '2º Bimestre') bimestreKey = 'N2';
+                    else if (nota.bimestre === '3º Bimestre') bimestreKey = 'N3';
+                    else if (nota.bimestre === '4º Bimestre') bimestreKey = 'N4';
+                    
+                    if (bimestreKey) {
+                        acc[materiaNome][bimestreKey] = nota.valor;
+                    }
+                    
                     const notasValidas = [
                         acc[materiaNome].N1, 
                         acc[materiaNome].N2, 
@@ -181,7 +186,7 @@ function RelatorioAluno() {
                         acc[materiaNome].N4
                     ]
                     .map(Number)
-                    .filter(n => !isNaN(n) && n !== null && n >= 0); // Filtra notas válidas
+                    .filter(n => !isNaN(n) && n !== null && n >= 0); 
                     
                     if(notasValidas.length > 0) {
                         const media = notasValidas.reduce((a, b) => a + b, 0) / notasValidas.length;
@@ -201,7 +206,7 @@ function RelatorioAluno() {
             });
     }, [alunoId, token]); 
 
-    // useEffect para buscar notas (só roda depois que os dados do aluno chegarem)
+    // useEffect para buscar notas
     useEffect(() => {
         if (alunoData) {
             fetchNotas();
@@ -209,9 +214,52 @@ function RelatorioAluno() {
     }, [alunoData, fetchNotas]);
 
 
+    // --- 2. FUNÇÃO PARA LIDAR COM O DOWNLOAD DO PDF ---
+    const handleDownloadPDF = async () => {
+        setIsDownloading(true);
+        setPdfError(''); 
+
+        try {
+            const pdfUrl = `${backendUrl}/pedagogico/relatorio/aluno/${alunoId}/pdf/`;
+            
+            const response = await axios.get(pdfUrl, {
+                headers: { 'Authorization': `Token ${token}` },
+                responseType: 'blob', // <-- Muito importante: espera um arquivo
+            });
+
+            // Cria um Blob (arquivo) com os dados recebidos
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+
+            // Cria uma URL temporária para o arquivo
+            const url = window.URL.createObjectURL(blob);
+
+            // Cria um link <a> invisível
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Define o nome do arquivo para download
+            const username = alunoData?.matricula || alunoId; 
+            link.setAttribute('download', `boletim_${username}.pdf`);
+            
+            // Simula o clique no link
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Limpa a URL temporária
+            window.URL.revokeObjectURL(url);
+
+        } catch (err) {
+            console.error("Erro ao baixar PDF:", err);
+            setPdfError('Erro ao baixar PDF. Verifique sua permissão.');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+    // --- FIM DA FUNÇÃO DE DOWNLOAD ---
+
+
     // --- Funções de Exclusão ---
-    
-    // Abre o diálogo de confirmação
     const handleClickDelete = (id, type) => {
         setItemToDelete({ id, type });
         setDialogOpen(true);
@@ -219,24 +267,19 @@ function RelatorioAluno() {
         setDeleteSuccess('');
     };
 
-    // Fecha o diálogo
     const handleCloseDialog = () => {
         setDialogOpen(false);
         setItemToDelete(null);
     };
 
-    // Confirma e executa a exclusão (DELETE request)
     const handleConfirmDelete = async () => {
         if (!itemToDelete) return;
-        
         const { id, type } = itemToDelete;
         
-        // Determinar a URL baseada no tipo
         let apiUrl;
         if (type === 'faltas') {
             apiUrl = `${backendUrl}/pedagogico/api/${type}/${id}/`;
         } else {
-            // 'advertencias' ou 'suspensoes'
             apiUrl = `${backendUrl}/disciplinar/api/${type}/${id}/`;
         }
 
@@ -246,7 +289,6 @@ function RelatorioAluno() {
             });
             
             setDeleteSuccess('Item excluído com sucesso!');
-            // Atualiza a lista na tela sem precisar recarregar a página
             if (type === 'advertencias') {
                 setAdvertencias(prev => prev.filter(item => item.id !== id));
             } else if (type === 'suspensoes') {
@@ -278,7 +320,6 @@ function RelatorioAluno() {
         return <Typography sx={{ mt: 4, textAlign: 'center' }}>Nenhum dado do aluno encontrado.</Typography>;
     }
 
-    // Define as permissões com base no cargo
     const podeEditarNotas = userRole && canEditRoles.includes(userRole);
     const ehAdmin = userRole && adminRoles.includes(userRole);
 
@@ -297,6 +338,19 @@ function RelatorioAluno() {
 
                 {/* Área de Botões de Ação */}
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 3, mb: 2 }}>
+                    
+                    {/* --- 3. BOTÃO DE PDF MODIFICADO --- */}
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        startIcon={isDownloading ? <CircularProgress size={20} color="inherit" /> : <DownloadIcon />}
+                        onClick={handleDownloadPDF} // <-- Chama a função
+                        disabled={isDownloading} // <-- Desabilita durante o download
+                    >
+                        {isDownloading ? 'Baixando...' : 'Baixar Boletim PDF'}
+                    </Button>
+                    {/* --- FIM DA MODIFICAÇÃO --- */}
+                    
                     {podeEditarNotas && (
                         <Button 
                             variant="contained" 
@@ -308,7 +362,6 @@ function RelatorioAluno() {
                         </Button>
                     )}
                     
-                    {/* Botões que dependem da permissão 'ehAdmin' */}
                     {ehAdmin && (
                         <>
                             <Button
@@ -332,7 +385,6 @@ function RelatorioAluno() {
                         </>
                     )}
 
-                    {/* Botão para professor lançar falta */}
                     {userRole === 'professor' && (
                         <Button
                             variant="contained"
@@ -345,6 +397,10 @@ function RelatorioAluno() {
                         </Button>
                     )}
                 </Box>
+                
+                {/* --- 4. ALERTA DE ERRO PARA PDF --- */}
+                {pdfError && <Alert severity="error" sx={{ mt: 2 }}>{pdfError}</Alert>}
+                
             </Paper>
 
             {/* 2. BOLETIM DE NOTAS */}
@@ -352,7 +408,6 @@ function RelatorioAluno() {
                 <Typography variant="h5" gutterBottom>Boletim de Notas</Typography>
                 {loadingNotas ? <CircularProgress size={24} /> : (
                     <Box sx={{ overflowX: 'auto' }}>
-                        {/* (Aqui usamos uma estrutura de Grid/Tabela para as notas) */}
                         {/* Cabeçalho */}
                         <Grid container spacing={1} sx={{ borderBottom: '2px solid #333', pb: 1, mb: 1, minWidth: 500 }}>
                             <Grid item xs={4}><Typography variant="body1" sx={{ fontWeight: 'bold' }}>Matéria</Typography></Grid>
@@ -385,7 +440,6 @@ function RelatorioAluno() {
             <Paper elevation={3} sx={{ padding: 3, mb: 3 }}>
                 <Typography variant="h5" gutterBottom>Ocorrências Disciplinares</Typography>
                 
-                {/* Alertas de sucesso/erro na exclusão */}
                 {deleteError && <Alert severity="error" onClose={() => setDeleteError('')}>{deleteError}</Alert>}
                 {deleteSuccess && <Alert severity="success" onClose={() => setDeleteSuccess('')}>{deleteSuccess}</Alert>}
 
@@ -397,21 +451,20 @@ function RelatorioAluno() {
                             <ListItem 
                                 key={adv.id} 
                                 sx={{ borderBottom: '1px solid #eee' }}
-                                // Botões de Ação (Editar/Excluir)
                                 secondaryAction={ehAdmin && (
                                     <Box>
                                         <IconButton 
                                             edge="end" 
                                             aria-label="editar" 
                                             component={RouterLink}
-                                            to={`/editar-advertencia/${adv.id}`} // Rota de Edição
+                                            to={`/editar-advertencia/${adv.id}`} 
                                         >
                                             <EditIcon />
                                         </IconButton>
                                         <IconButton 
                                             edge="end" 
                                             aria-label="excluir" 
-                                            onClick={() => handleClickDelete(adv.id, 'advertencias')} // Aciona o diálogo
+                                            onClick={() => handleClickDelete(adv.id, 'advertencias')} 
                                         >
                                             <DeleteIcon />
                                         </IconButton>
@@ -445,14 +498,14 @@ function RelatorioAluno() {
                                             edge="end" 
                                             aria-label="editar"
                                             component={RouterLink}
-                                            to={`/editar-suspensao/${susp.id}`} // Rota de Edição
+                                            to={`/editar-suspensao/${susp.id}`} 
                                         >
                                             <EditIcon />
                                         </IconButton>
                                         <IconButton 
                                             edge="end" 
                                             aria-label="excluir"
-                                            onClick={() => handleClickDelete(susp.id, 'suspensoes')} // Aciona o diálogo
+                                            onClick={() => handleClickDelete(susp.id, 'suspensoes')} 
                                         >
                                             <DeleteIcon />
                                         </IconButton>

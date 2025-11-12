@@ -224,6 +224,25 @@ class NotaViewSet(viewsets.ModelViewSet):
         if user.cargo == 'professor':
             return queryset.filter(disciplina__professores=user)
         
+        # ==================================================
+        # --- A CORREÇÃO ESTÁ AQUI ---
+        # ==================================================
+        if user.cargo == 'responsavel': # <-- ADICIONADO PARA RESPONSÁVEL
+            if not aluno_id:
+                # Se for responsável e não pedir um aluno_id, não retorna nada.
+                return Nota.objects.none()
+            try:
+                # Verifica se o aluno_id requisitado pertence a este responsável
+                if user.responsavel_profile.alunos.filter(id=aluno_id).exists():
+                    return queryset # Retorna as notas do aluno (já filtrado pelo aluno_id)
+                else:
+                    return Nota.objects.none() # Nega acesso se não for o aluno dele
+            except:
+                 return Nota.objects.none() # Em caso de erro (ex: não ter responsavel_profile)
+        # ==================================================
+        # --- FIM DA CORREÇÃO ---
+        # ==================================================
+        
         admin_roles = ['administrador', 'coordenador', 'diretor', 'ti']
         if user.cargo in admin_roles or user.is_superuser:
             return queryset 
@@ -327,21 +346,34 @@ class FaltaViewSet(viewsets.ModelViewSet):
         if disciplina_id:
             queryset = queryset.filter(disciplina_id=disciplina_id)
         if aluno_id:
-             queryset = queryset.filter(aluno_id=aluno_id)
+            queryset = queryset.filter(aluno_id=aluno_id)
 
         if user.cargo == 'aluno':
             if hasattr(user, 'aluno_profile'):
                 return queryset.filter(aluno=user.aluno_profile)
             else:
-                return Falta.objects.none() 
-        
+                return Falta.objects.none()
+
         if user.cargo == 'professor':
             return queryset.filter(disciplina__professores=user)
-        
+
+        # Permitir que o responsável veja as faltas dos seus alunos
+        if user.cargo == 'responsavel':
+            if not aluno_id:
+                return Falta.objects.none()
+            try:
+                # Verifica se o aluno_id requisitado pertence a este responsável
+                if user.responsavel_profile.alunos.filter(id=aluno_id).exists():
+                    return queryset
+                else:
+                    return Falta.objects.none()
+            except Exception:
+                return Falta.objects.none()
+
         admin_roles = ['administrador', 'coordenador', 'diretor', 'ti']
         if user.cargo in admin_roles or user.is_superuser:
-            return queryset 
-            
+            return queryset
+
         return Falta.objects.none()
 
 @api_view(['GET'])
@@ -374,7 +406,15 @@ def relatorio_desempenho_aluno(request, aluno_id):
 
 
     notas = Nota.objects.filter(aluno=aluno)
-    faltas = Falta.objects.filter(aluno=aluno)
+    # Permitir que o responsável veja as faltas dos seus alunos
+    if user_cargo == 'responsavel':
+        if not (hasattr(request.user, 'responsavel_profile') and 
+                request.user.responsavel_profile.alunos.filter(id=aluno.id).exists()):
+            return Response({'erro': 'Acesso negado. Você só pode ver relatórios de alunos pelos quais é responsável.'}, status=status.HTTP_403_FORBIDDEN)
+        # O responsável só pode ver as faltas do aluno pelo qual é responsável
+        faltas = Falta.objects.filter(aluno=aluno)
+    else:
+        faltas = Falta.objects.filter(aluno=aluno)
     presencas = Presenca.objects.filter(aluno=aluno)
 
     medias_disciplinas = notas.values('disciplina__materia__nome').annotate(
@@ -587,7 +627,7 @@ class NotificacaoViewSet(viewsets.ModelViewSet):
             notificacao.save()
             return Response(NotificacaoSerializer(notificacao).data)
         except Notificacao.DoesNotExist:
-            return Response({'erro': 'Notificação não encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'erro': 'Notificação não encontrada.'}, status=status.HTTP_4404_NOT_FOUND)
 
 
 # --- VIEWSET DO RESPONSÁVEL CORRIGIDA ---
