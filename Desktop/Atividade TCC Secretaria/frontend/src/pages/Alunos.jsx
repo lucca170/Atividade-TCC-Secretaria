@@ -106,11 +106,10 @@ function Alunos() {
                 </Button>
               }
             >
-              {/* 'aluno.nome' e 'aluno.turma_nome' vêm do AlunoSerializer */}
-              {/* --- ATUALIZADO AQUI --- */}
+              {/* --- ATUALIZADO AQUI (CORREÇÃO) --- */}
               <ListItemText 
-                primary={aluno.nome} 
-                secondary={`CPF (Login): ${aluno.cpf || 'N/A'} | Turma: ${aluno.turma_nome || 'N/A'}`} 
+                primary={`${aluno.usuario.first_name} ${aluno.usuario.last_name}`} 
+                secondary={`CPF (Login): ${aluno.usuario.username || 'N/A'} | Turma: ${aluno.turma_nome || 'N/A'}`} 
               />
             </ListItem>
           ))}

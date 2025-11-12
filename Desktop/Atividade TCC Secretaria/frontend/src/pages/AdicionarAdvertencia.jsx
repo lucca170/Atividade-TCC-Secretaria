@@ -62,7 +62,8 @@ function AdicionarAdvertencia() {
           console.log('Aluno selecionado:', alunoSelecionado);
           if (alunoSelecionado) {
             setAlunos([alunoSelecionado]);
-            setAlunoNome(alunoSelecionado.nome);
+            // --- CORREÇÃO AQUI ---
+            setAlunoNome(`${alunoSelecionado.usuario.first_name} ${alunoSelecionado.usuario.last_name}`);
           }
         } else {
           setAlunos(response.data);
@@ -148,7 +149,8 @@ function AdicionarAdvertencia() {
                 {loadingAlunos && <MenuItem value=""><em>Carregando alunos...</em></MenuItem>}
                 {alunos.map((aluno) => (
                   <MenuItem key={aluno.id} value={aluno.id}>
-                    {aluno.nome} (Turma: {aluno.turma_nome})
+                    {/* --- CORREÇÃO AQUI --- */}
+                    {aluno.usuario.first_name} {aluno.usuario.last_name} (Turma: {aluno.turma_nome})
                   </MenuItem>
                 ))}
               </Select>

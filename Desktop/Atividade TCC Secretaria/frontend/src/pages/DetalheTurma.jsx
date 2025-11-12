@@ -84,20 +84,6 @@ function DetalheTurma() {
               Turno: {turma?.turno_display}
             </Typography>
           </Box>
-          
-          {/* Botões de Ação */}
-          {canManageRoles.includes(userRole) && (
-            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Button
-                component={RouterLink}
-                to={`/turmas/${turmaId}/frequencia`} // <-- Link para a nova página
-                variant="contained"
-                color="primary"
-              >
-                Lançar Frequência
-              </Button>
-            </Box>
-          )}
         </Box>
         
         <Button variant="outlined" onClick={() => navigate('/turmas')} sx={{ mb: 2 }}>

@@ -74,6 +74,7 @@ function RelatorioAluno() {
     const [userRole, setUserRole] = useState(null); 
     const [advertencias, setAdvertencias] = useState([]);
     const [suspensoes, setSuspensoes] = useState([]);
+    const [faltas, setFaltas] = useState([]);
     
     // Estados das Notas
     const [notas, setNotas] = useState({}); 
@@ -93,14 +94,17 @@ function RelatorioAluno() {
             const headers = { 'Authorization': `Token ${token}` };
             const apiUrlAdvertencias = `${backendUrl}/disciplinar/api/advertencias/?aluno_id=${alunoId}`;
             const apiUrlSuspensoes = `${backendUrl}/disciplinar/api/suspensoes/?aluno_id=${alunoId}`;
+            const apiUrlFaltas = `${backendUrl}/pedagogico/api/faltas/?aluno_id=${alunoId}`;
 
-            const [resAdvertencias, resSuspensoes] = await Promise.all([
+            const [resAdvertencias, resSuspensoes, resFaltas] = await Promise.all([
                 axios.get(apiUrlAdvertencias, { headers }),
-                axios.get(apiUrlSuspensoes, { headers })
+                axios.get(apiUrlSuspensoes, { headers }),
+                axios.get(apiUrlFaltas, { headers })
             ]);
             
             setAdvertencias(resAdvertencias.data);
             setSuspensoes(resSuspensoes.data);
+            setFaltas(resFaltas.data);
 
         } catch (err) {
              console.error("Erro ao buscar dados disciplinares:", err);
@@ -226,8 +230,15 @@ function RelatorioAluno() {
         if (!itemToDelete) return;
         
         const { id, type } = itemToDelete;
-        // 'type' será 'advertencias' ou 'suspensoes'
-        const apiUrl = `${backendUrl}/disciplinar/api/${type}/${id}/`; 
+        
+        // Determinar a URL baseada no tipo
+        let apiUrl;
+        if (type === 'faltas') {
+            apiUrl = `${backendUrl}/pedagogico/api/${type}/${id}/`;
+        } else {
+            // 'advertencias' ou 'suspensoes'
+            apiUrl = `${backendUrl}/disciplinar/api/${type}/${id}/`;
+        }
 
         try {
             await axios.delete(apiUrl, {
@@ -238,8 +249,10 @@ function RelatorioAluno() {
             // Atualiza a lista na tela sem precisar recarregar a página
             if (type === 'advertencias') {
                 setAdvertencias(prev => prev.filter(item => item.id !== id));
-            } else {
+            } else if (type === 'suspensoes') {
                 setSuspensoes(prev => prev.filter(item => item.id !== id));
+            } else if (type === 'faltas') {
+                setFaltas(prev => prev.filter(item => item.id !== id));
             }
             
         } catch (err) {
@@ -317,6 +330,19 @@ function RelatorioAluno() {
                                 Registrar Suspensão
                             </Button>
                         </>
+                    )}
+
+                    {/* Botão para professor lançar falta */}
+                    {userRole === 'professor' && (
+                        <Button
+                            variant="contained"
+                            color="info"
+                            startIcon={<AddCommentIcon />}
+                            component={RouterLink}
+                            to={`/adicionar-falta?alunoId=${alunoId}`}
+                        >
+                            Lançar Falta
+                        </Button>
                     )}
                 </Box>
             </Paper>
@@ -442,6 +468,47 @@ function RelatorioAluno() {
                     </List>
                 ) : (
                     <Typography variant="body2">Nenhuma suspensão registrada.</Typography>
+                )}
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Lista de Faltas */}
+                <Typography variant="h6" gutterBottom>Faltas</Typography>
+                {faltas.length > 0 ? (
+                    <List dense>
+                        {faltas.map(falta => (
+                            <ListItem 
+                                key={falta.id} 
+                                sx={{ borderBottom: '1px solid #eee' }}
+                                secondaryAction={userRole === 'professor' && (
+                                    <Box>
+                                        <IconButton 
+                                            edge="end" 
+                                            aria-label="editar"
+                                            component={RouterLink}
+                                            to={`/editar-falta/${falta.id}?alunoId=${alunoId}`}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton 
+                                            edge="end" 
+                                            aria-label="excluir"
+                                            onClick={() => handleClickDelete(falta.id, 'faltas')}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Box>
+                                )}
+                            >
+                                <ListItemText 
+                                    primary={`${falta.disciplina_nome || 'Disciplina desconhecida'} - ${falta.justificada ? '✓ Justificada' : '✗ Não justificada'}`}
+                                    secondary={`Data: ${formatarData(falta.data)}`}
+                                />
+                            </ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <Typography variant="body2">Nenhuma falta registrada.</Typography>
                 )}
             </Paper>
 

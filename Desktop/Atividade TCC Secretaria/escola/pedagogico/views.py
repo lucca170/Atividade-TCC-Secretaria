@@ -110,7 +110,7 @@ class EventoAcademicoViewSet(viewsets.ModelViewSet):
 class AlunoViewSet(viewsets.ModelViewSet): 
 
     serializer_class = AlunoSerializer
-    permission_classes = [IsCoordenacao] # Permissão base
+    permission_classes = [IsAuthenticated] # Alterado para IsAuthenticated
 
     def get_queryset(self):
         user = self.request.user
@@ -119,6 +119,14 @@ class AlunoViewSet(viewsets.ModelViewSet):
             return Aluno.objects.none()
         
         admin_roles = ['administrador', 'coordenador', 'diretor', 'ti']
+        
+        # Professores veem alunos das suas turmas
+        if user.cargo == 'professor':
+            # Pegar turmas das disciplinas do professor
+            disciplinas = Disciplina.objects.filter(professores=user)
+            turmas = Turma.objects.filter(disciplina__in=disciplinas).distinct()
+            return Aluno.objects.filter(turma__in=turmas).order_by('usuario__first_name')
+        
         # Corrigido para incluir superuser
         if user.cargo not in admin_roles and not user.is_superuser: 
             return Aluno.objects.none()
@@ -140,7 +148,11 @@ class AlunoViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         # Define permissões por ação
-        if self.action in ['list', 'retrieve', 'create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['list', 'retrieve']:
+            # Professores podem listar e ver detalhes de alunos
+            return [permissions.IsAuthenticated()]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            # Apenas coordenação pode criar/editar/deletar
             return [permissions.IsAuthenticated(), IsCoordenacao()]
         return [permissions.IsAuthenticated()]
 
@@ -369,19 +381,30 @@ def relatorio_desempenho_aluno(request, aluno_id):
         media=Avg('valor')
     )
 
+    # --- INÍCIO DA CORREÇÃO ---
+    
+    # 1. Buscar o primeiro responsável (se existir)
+    primeiro_responsavel = aluno.responsaveis.first()
+    responsavel_nome = primeiro_responsavel.usuario.get_full_name() if primeiro_responsavel else 'N/A'
+    responsavel_email = primeiro_responsavel.usuario.email if primeiro_responsavel else 'N/A'
+
     context = {
         'id': aluno.id,
         'nome': aluno.usuario.get_full_name() or aluno.usuario.username,
-        'matricula': aluno.matricula,
+        # 2. Usar 'aluno.usuario.username' (CPF) em vez de 'matricula'
+        'matricula': aluno.usuario.username, 
         'turma': aluno.turma.id if aluno.turma else None,
         'turma_nome': aluno.turma.nome if aluno.turma else 'Sem turma',
-        'responsavel_nome': aluno.responsavel.usuario.get_full_name() if aluno.responsavel else 'N/A',
-        'responsavel_email': aluno.responsavel.usuario.email if aluno.responsavel else 'N/A',
+        # 3. Usar as variáveis do responsável buscadas acima
+        'responsavel_nome': responsavel_nome,
+        'responsavel_email': responsavel_email,
         'status': aluno.get_status_display(),
         'medias_disciplinas': list(medias_disciplinas), 
         'total_faltas': faltas.count(),
         'total_presencas': presencas.count()
     }
+    
+    # --- FIM DA CORREÇÃO ---
 
     return Response(context)
 

@@ -28,6 +28,7 @@ class AlunoSerializer(serializers.ModelSerializer):
     """
     usuario = UsuarioSerializer(read_only=True) 
     turma_nome = serializers.CharField(source='turma.nome', read_only=True)
+    nome = serializers.CharField(source='usuario.get_full_name', read_only=True)
     
     advertencias_count = serializers.SerializerMethodField()
     suspensoes_count = serializers.SerializerMethodField()
@@ -36,7 +37,7 @@ class AlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aluno
         fields = [
-            'id', 'usuario', 'turma', 'turma_nome', 'status', 
+            'id', 'usuario', 'turma', 'turma_nome', 'nome', 'status', 
             'advertencias_count', 'suspensoes_count', 'media_geral'
         ]
         

@@ -44,10 +44,11 @@ import GerenciarMaterias from './pages/GerenciarMaterias';
 import AdicionarMateria from './pages/AdicionarMateria'; 
 import GerenciarProfessores from './pages/GerenciarProfessores';
 import AdicionarProfessor from './pages/AdicionarProfessor';
-import LancarFrequencia from './pages/LancarFrequencia';
 import LancarNotas from './pages/LancarNotas';
 import AdicionarAdvertencia from './pages/AdicionarAdvertencia';
 import AdicionarSuspensao from './pages/AdicionarSuspensao';
+import AdicionarFalta from './pages/AdicionarFalta';
+import EditarFalta from './pages/EditarFalta';
 
 // --- ADICIONEI AQUI A PÁGINA DE RESERVAS ---
 import Reservas from './pages/Reservas';
@@ -148,8 +149,6 @@ function App() {
             <Route path="turmas/:turmaId" element={<DetalheTurma />} />
             <Route path="turmas/adicionar" element={<AdicionarTurma />} />
             
-            {/* Adicionando as rotas que faltavam no seu App.jsx original */}
-            <Route path="turmas/:turmaId/frequencia" element={<LancarFrequencia />} />
             <Route path="notas/lancar" element={<LancarNotas />} />
 
             <Route path="calendario" element={<CalendarioAcademico />} />
@@ -173,8 +172,10 @@ function App() {
             <Route path="materias/adicionar" element={<AdicionarMateria />} /> 
             <Route path="/adicionar-advertencia" element={<AdicionarAdvertencia />} />
             <Route path="/adicionar-suspensao" element={<AdicionarSuspensao />} />
+            <Route path="/adicionar-falta" element={<AdicionarFalta />} />
             <Route path="/editar-advertencia/:id" element={<EditarAdvertencia />} />
             <Route path="/editar-suspensao/:id" element={<EditarSuspensao />} />
+            <Route path="/editar-falta/:id" element={<EditarFalta />} />
 
             {/* --- ADICIONEI A ROTA DE RESERVAS AQUI --- */}
             <Route path="reservas" element={<Reservas />} />
