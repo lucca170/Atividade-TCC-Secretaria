@@ -1,101 +1,811 @@
----Projeto Secretaria Web (Sistema de Gestão Escolar)---
+# 📚 Secretaria Web - Sistema de Gestão Escolar
 
-O que é?
-O Secretaria Web é um sistema de gerenciamento escolar full-stack. O projeto simula um portal onde diferentes tipos de usuários (administradores, professores, alunos) podem interagir com dados acadêmicos.
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python)
+![Django](https://img.shields.io/badge/Django-5.0-green?logo=django)
+![React](https://img.shields.io/badge/React-18-cyan?logo=react)
+![Vite](https://img.shields.io/badge/Vite-Latest-purple?logo=vite)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+![Status](https://img.shields.io/badge/Status-TCC%20Finalizado-brightgreen)
 
-O Backend é construído com Python utilizando Django e Django REST Framework (DRF). Ele fornece uma API RESTful completa para autenticação de usuários (baseada em Token) e para operações de CRUD (Criar, Ler, Atualizar, Deletar) em alunos, turmas, notas, eventos de calendário e mais.
+> **Secretaria Web** é um sistema completo de gestão escolar desenvolvido como Trabalho de Conclusão de Curso (TCC). Uma plataforma moderna que integra administração, pedagogia, recursos e disciplina em um único portal.
 
-O Frontend é uma moderna Single Page Application (SPA) construída com React, Vite e Material-UI (MUI). Ele consome a API do Django para fornecer uma interface de usuário interativa e responsiva para gerenciar o sistema.
+## 📋 Índice
 
-#---Principais Funcionalidades---#
+- [Visão Geral](#visão-geral)
+- [Funcionalidades Principais](#funcionalidades-principais)
+- [Stack Tecnológico](#stack-tecnológico)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Como Rodar Localmente](#como-rodar-localmente)
+- [Documentação da API](#documentação-da-api)
+- [Modelos de Dados](#modelos-de-dados)
+- [Guia de Desenvolvimento](#guia-de-desenvolvimento)
+- [Testes](#testes)
+- [Troubleshooting](#troubleshooting)
+- [Contribuição](#contribuição)
+- [Autores](#autores)
 
-Gestão de Usuários: Sistema de login/logout com autenticação baseada em token.
+---
 
-Controle de Permissão: API com permissões customizadas (ex: Apenas Coordenadores podem criar turmas, apenas Professores podem lançar notas).
+## 🎯 Visão Geral
 
-Gestão Pedagógica:
+### O que é?
 
-CRUD de Alunos e Turmas.
+Secretaria Web é uma plataforma de gestão escolar **full-stack** que permite:
 
-Visualização de relatórios de desempenho por aluno.
+- ✅ Gerenciamento centralizado de usuários (alunos, professores, coordenadores, responsáveis)
+- ✅ Controle acadêmico (turmas, disciplinas, notas, frequência)
+- ✅ Gestão de recursos (salas, laboratórios, materiais didáticos)
+- ✅ Sistema de disciplina (advertências, suspensões)
+- ✅ Biblioteca digital (catálogo de livros, empréstimos)
+- ✅ Autenticação segura com tokens JWT
+- ✅ Recuperação de senha por código de e-mail
+- ✅ Dashboard interativo para cada tipo de usuário
 
-Lançamento e visualização de Notas.
+### Arquitetura
 
-Calendário Acadêmico: Visualização de eventos (provas, feriados, trabalhos) em um calendário interativo (FullCalendar).
+```
+┌─────────────────────────────────────────────────────┐
+│         Frontend (React + Vite + Material-UI)       │
+│              http://localhost:5173                  │
+└──────────────────────┬──────────────────────────────┘
+                       │ (HTTP/REST)
+                       │
+┌──────────────────────▼──────────────────────────────┐
+│    Backend (Django + Django REST Framework)         │
+│            http://localhost:8000                    │
+│  ┌─────────────────────────────────────────────┐   │
+│  │ Django Apps:                                │   │
+│  │  • base (autenticação)                      │   │
+│  │  • pedagogico (academico)                   │   │
+│  │  • coordenacao (recursos)                   │   │
+│  │  • disciplinar (disciplina)                 │   │
+│  │  • biblioteca (livros/empréstimos)          │   │
+│  └─────────────────────────────────────────────┘   │
+└──────────────────────┬──────────────────────────────┘
+                       │ (ORM)
+                       │
+┌──────────────────────▼──────────────────────────────┐
+│      Banco de Dados (SQLite / PostgreSQL)           │
+│              db.sqlite3                             │
+└─────────────────────────────────────────────────────┘
+```
 
-Eventos Extracurriculares: Alunos podem se inscrever ou cancelar inscrição em eventos com vagas limitadas.
+---
 
-#---Tecnologias Utilizadas---#
+## ✨ Funcionalidades Principais
 
-Backend (Pasta: /escola)
+### 🔐 1. Autenticação e Segurança
 
-Python
+- **Login por Token**: Sistema seguro baseado em tokens REST Framework
+- **Recuperação de Senha**: Fluxo completo com código de 6 dígitos enviado por e-mail
+- **Permissões Granulares**: Controle de acesso baseado em cargo do usuário
+- **Cache de Códigos**: Armazenamento temporário seguro de códigos de recuperação
 
-Django & Django REST Framework
+```
+Cargos Disponíveis:
+├── Administrador  → Acesso total ao sistema
+├── Coordenador    → Gestão acadêmica e relatórios
+├── Professor      → Lançamento de notas e frequência
+├── Aluno          → Acesso a boletim e biblioteca
+└── Responsável    → Acompanhamento de alunos
+```
 
-CORS Headers (para comunicação com o frontend)
+### 📊 2. Administração e Coordenação
 
-SQLite (banco de dados padrão de desenvolvimento)
+| Funcionalidade | Descrição |
+|---|---|
+| **Gestão de Usuários** | CRUD completo de alunos, professores, responsáveis |
+| **Turmas** | Criar/editar turmas com período (manhã, tarde, noite) |
+| **Matérias** | Gerenciar disciplinas do currículo |
+| **Disciplinas** | Oferecer matérias em turmas com múltiplos professores |
+| **Salas/Laboratórios** | Controle de espaços com capacidade |
+| **Materiais Didáticos** | Inventário de recursos (livros, equipamentos) |
+| **Eventos Acadêmicos** | Criar provas, trabalhos, feriados, reuniões |
+| **Relatórios** | Dashboard com KPIs escolares |
 
-Frontend (Pasta: /frontend)
+### 👨‍🏫 3. Módulo Professor
 
-React 18
+- 📋 **Visualização de Turmas**: Lista de alunos atribuídos
+- 📝 **Lançamento de Notas**: Interface para registrar notas por disciplina e bimestre
+- ✍️ **Lançamento de Frequência**: Registrar faltas de alunos
+- 📅 **Agenda**: Consultar planos de aula
+- 🏛️ **Reserva de Salas**: Reservar espaços com verificação de conflitos
 
-Vite (Build tool)
+### 👦 4. Módulo Aluno
 
-React Router (Rotas)
+- 🏠 **Dashboard**: Página inicial personalizada
+- 📊 **Boletim/Relatório**: Notas, faltas, desempenho por disciplina
+- 📥 **Histórico Disciplinar**: Visualizar advertências e suspensões
+- 📚 **Biblioteca**: Consultar livros e fazer empréstimos
+- 📖 **Meus Empréstimos**: Acompanhar devoluções
+- 📅 **Calendário Acadêmico**: Ver eventos e prazos
 
-Axios (Requisições à API)
+### 👨‍👩‍👧 5. Módulo Responsável
 
-Material-UI (MUI) (Componentes de UI)
+- 👶 **Meus Alunos**: Lista de filhos/dependentes
+- 📈 **Relatório do Aluno**: Acesso ao boletim e desempenho
+- 🔔 **Notificações**: Alertas automáticos (faltas, notas, eventos)
 
-FullCalendar (Visualização do Calendário)
+---
 
-Como Rodar (Início Rápido)
-Siga os 5 passos abaixo para rodar o projeto localmente.
+## 🛠️ Stack Tecnológico
 
-1. Clone o Repositório
-Bash
+### Backend
+```
+Framework:          Django 5.0
+API REST:           Django REST Framework
+Autenticação:       Token Authentication
+CORS:               django-cors-headers
+Admin UI:           Jazzmin
+Relatórios PDF:     xhtml2pdf
+Banco de Dados:     SQLite (dev) / PostgreSQL (prod)
+Cache:              Django Cache Framework
+Email:              Django Mail Backend
+```
 
-git clone https://github.com/SEU-USUARIO/projeto-secretaria-web.git
-cd projeto-secretaria-web
-2. Configure e Rode o Backend (Terminal 1)
-Bash
+### Frontend
+```
+Biblioteca:         React 18
+Build Tool:         Vite
+UI Components:      Material-UI (MUI)
+Requisições:        Axios
+Calendário:         FullCalendar
+Estado:             Context API / Hooks
+CSS:                CSS Modules + MUI Theming
+```
 
-# 1. Navegue até a pasta do backend
-cd escola/
+### DevOps & Deployment
+```
+Versionamento:      Git/GitHub
+CI/CD:              (Pronto para GitHub Actions)
+Containerização:    (Dockerfiles inclusos)
+Servidor:           Gunicorn (produção)
+```
 
-# 2. (Recomendado) Crie e ative um ambiente virtual
+---
+
+## 📁 Estrutura do Projeto
+
+```
+Projeto Secretaria Lucas/
+│
+├── escola/                          # Backend Django
+│   ├── manage.py                    # Gerenciador Django
+│   ├── db.sqlite3                   # Banco de dados (desenvolvimento)
+│   │
+│   ├── escola/
+│   │   ├── settings.py              # ✅ Configurações Django
+│   │   ├── urls.py                  # Rotas principais
+│   │   ├── wsgi.py                  # WSGI application
+│   │   └── __pycache__/
+│   │
+│   ├── base/                        # 🔐 Autenticação
+│   │   ├── models.py                # ✅ Usuario (customizado)
+│   │   ├── forms.py                 # ✅ CustomUserCreationForm, CustomUserChangeForm
+│   │   ├── admin.py                 # ✅ UsuarioAdmin
+│   │   ├── views.py                 # ✅ Home, Registrar, UserViewSet, Login, Password Reset
+│   │   ├── serializers.py           # ✅ UserSerializer, CustomAuthTokenSerializer
+│   │   ├── urls.py                  # ✅ Rotas REST
+│   │   ├── tests.py                 # ✅ 5 testes automatizados
+│   │   └── migrations/
+│   │
+│   ├── pedagogico/                  # 📚 Gestão Acadêmica
+│   │   ├── models.py                # ✅ 12 modelos (Aluno, Turma, Nota, etc)
+│   │   ├── forms.py
+│   │   ├── views.py
+│   │   ├── admin.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── migrations/
+│   │
+│   ├── coordenacao/                 # 🏛️ Recursos
+│   │   ├── models.py                # ✅ MaterialDidatico, SalaLaboratorio, etc
+│   │   ├── admin.py
+│   │   ├── views.py
+│   │   └── migrations/
+│   │
+│   ├── disciplinar/                 # ⚠️ Disciplina
+│   │   ├── models.py                # ✅ Advertencia, Suspensao
+│   │   └── migrations/
+│   │
+│   └── biblioteca/                  # 📖 Livros
+│       ├── models.py                # ✅ Livro, Emprestimo, Autor
+│       └── migrations/
+│
+├── frontend/                        # Frontend React
+│   ├── package.json                 # Dependências Node.js
+│   ├── vite.config.js               # Configuração Vite
+│   ├── index.html
+│   │
+│   ├── src/
+│   │   ├── main.jsx                 # Ponto de entrada
+│   │   ├── App.jsx                  # Componente raiz
+│   │   ├── index.css
+│   │   │
+│   │   ├── components/              # Componentes reutilizáveis
+│   │   │   ├── Layout.jsx
+│   │   │   ├── EditarNotasModal.jsx
+│   │   │   └── ...
+│   │   │
+│   │   ├── pages/                   # Páginas (rotas)
+│   │   │   ├── Login.jsx
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Alunos.jsx
+│   │   │   ├── LancarNotas.jsx
+│   │   │   ├── Biblioteca.jsx
+│   │   │   ├── PortalResponsavel.jsx
+│   │   │   └── ...
+│   │   │
+│   │   └── hooks/                   # Hooks customizados
+│   │       └── useAuth.js
+│   │
+│   └── public/                      # Assets estáticos
+│
+├── DOCUMENTACAO_COMENTARIOS.md      # 📖 Documentação de código (11 seções)
+├── readme                           # Este arquivo
+└── .gitignore
+```
+
+**Arquivos Comentados**: ✅ Todos os modelos, formulários, views, serializers e configurações foram documentados com explicações detalhadas.
+
+---
+
+## 🚀 Como Rodar Localmente
+
+### Pré-requisitos
+
+```
+✅ Python 3.13+
+✅ Node.js 18+  (npm)
+✅ Git
+✅ Terminal (cmd, bash, PowerShell)
+```
+
+### 1️⃣ Clone o Repositório
+
+```bash
+git clone https://github.com/lucca170/Atividade-TCC-Secretaria.git
+cd "Projeto Secretaria Lucas"
+```
+
+### 2️⃣ Configure o Backend (Terminal 1)
+
+```bash
+# Navegue para a pasta do backend
+cd escola
+
+# Crie ambiente virtual
 python -m venv venv
-source venv/bin/activate  # (No Windows: .\venv\Scripts\activate)
 
-# 3. Instale as dependências
-pip install django djangorestframework django-cors-headers
+# Ative o ambiente virtual
+# Windows:
+.\venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-# 4. Aplique as migrações do banco de dados
+# Instale dependências
+pip install -r requirements.txt
+# Ou manualmente:
+pip install django djangorestframework django-cors-headers djangorestframework-authtoken jazzmin xhtml2pdf
+
+# Aplique migrações
 python manage.py migrate
 
-# 5. Rode o servidor do backend (na porta 8000)
+# Crie superuser (admin)
+python manage.py createsuperuser
+# Digite: username, email, password (2x)
+
+# Rode servidor backend
 python manage.py runserver
-3. Configure e Rode o Frontend (Terminal 2)
-Bash
+# Acesso: http://localhost:8000
+# Admin:  http://localhost:8000/admin
+```
 
-# 1. Navegue até a pasta do frontend (a partir da raiz do projeto)
-cd frontend/
+### 3️⃣ Configure o Frontend (Terminal 2)
 
-# 2. Instale as dependências
+```bash
+# Navegue para frontend (a partir da raiz)
+cd frontend
+
+# Instale dependências
 npm install
 
-# 3. Rode o servidor de desenvolvimento (na porta 5173)
+# Rode servidor frontend
 npm run dev
-4. Acesse o Sistema
-Abra seu navegador e acesse: http://localhost:5173
+# Acesso: http://localhost:5173
+```
 
-5. (Opcional) Crie um Superusuário
-Para acessar o painel de admin do Django e criar usuários (professores, coordenadores):
+### 4️⃣ Acesse o Sistema
 
-Bash
+```
+🔗 Frontend:  http://localhost:5173
+🔗 Backend:   http://localhost:8000
+🔗 Admin:     http://localhost:8000/admin
+```
 
-# No terminal do Backend (Terminal 1)
+**Login**: Use o superuser criado no passo 2.
+
+---
+
+## 📡 Documentação da API
+
+### Autenticação
+
+#### Login (Obter Token)
+```http
+POST /api/login/
+Content-Type: application/json
+
+{
+  "username": "usuario",
+  "password": "senha123"
+}
+
+Response (200):
+{
+  "token": "abc123xyz...",
+  "user": {
+    "id": 1,
+    "username": "usuario",
+    "email": "user@example.com",
+    "cargo": "professor",
+    "first_name": "João",
+    "last_name": "Silva"
+  }
+}
+```
+
+#### Usar Token em Requisições
+```http
+GET /api/users/
+Authorization: Token abc123xyz...
+```
+
+### Endpoints Principais
+
+| Método | Endpoint | Descrição | Permissão |
+|--------|----------|-----------|-----------|
+| GET | `/api/users/` | Listar usuários | IsAuthenticated |
+| POST | `/api/users/` | Criar usuário | IsCoordenacao |
+| GET | `/api/users/<id>/` | Detalhes de usuário | IsAuthenticated |
+| PUT | `/api/users/<id>/` | Atualizar usuário | IsAuthenticated |
+| DELETE | `/api/users/<id>/` | Deletar usuário | IsCoordenacao |
+| GET | `/api/users/me/` | Dados do usuário logado | IsAuthenticated |
+| GET | `/api/dashboard/` | Dados do dashboard | IsCoordenacao |
+| POST | `/api/password-reset/` | Solicitar código | AllowAny |
+| POST | `/api/password-reset-login/` | Login com código | AllowAny |
+
+### Recuperação de Senha (Fluxo Completo)
+
+```http
+# 1. Solicitar código
+POST /api/password-reset/
+{
+  "email": "usuario@example.com"
+}
+
+# 2. Usuário recebe código por e-mail (6 dígitos)
+# Código válido por 10 minutos
+
+# 3. Fazer login com código
+POST /api/password-reset-login/
+{
+  "email": "usuario@example.com",
+  "code": "123456"
+}
+
+Response (200):
+{
+  "token": "novo_token...",
+  "user": { ... }
+}
+```
+
+### Filtros
+
+```http
+# Filtrar usuários por cargo
+GET /api/users/?cargo=professor
+
+GET /api/users/?cargo=aluno
+```
+
+---
+
+## 🗄️ Modelos de Dados
+
+### Base (Autenticação)
+
+**Usuario** (AbstractUser)
+```python
+- id (auto)
+- username (unique)
+- email (unique, required)
+- password (hashed)
+- first_name, last_name
+- cargo (professor, aluno, coordenador, diretor, ti, responsavel, administrador)
+- is_active, is_staff, is_superuser
+```
+
+### Pedagogico (Acadêmico)
+
+**Turma**
+```python
+- id, nome, turno (manha, tarde, noite)
+```
+
+**Materia**
+```python
+- id, nome (unique)
+```
+
+**Disciplina** (Oferta)
+```python
+- id, materia_id, turma_id, carga_horaria
+- professores (ManyToMany)
+- Constraint: unique(materia, turma)
+```
+
+**Aluno**
+```python
+- id, usuario_id (OneToOne), turma_id
+- status (ativo, inativo, evadido, transferido, concluido)
+```
+
+**Nota**
+```python
+- id, aluno_id, disciplina_id, bimestre, valor (decimal)
+- Constraint: unique(aluno, disciplina, bimestre)
+```
+
+**Falta**
+```python
+- id, aluno_id, disciplina_id, data, justificada (bool)
+```
+
+**Responsavel**
+```python
+- id, usuario_id (OneToOne)
+- alunos (ManyToMany)
+```
+
+**EventoAcademico**
+```python
+- id, titulo, data_inicio, data_fim, tipo, descricao
+- turma_id (nullable), disciplina_id (nullable)
+```
+
+**PlanoDeAula**
+```python
+- id, disciplina_id, data, conteudo_previsto, atividades
+- Constraint: unique(disciplina, data)
+```
+
+**Notificacao**
+```python
+- id, destinatario_id, mensagem, data_envio (auto), lida (bool)
+```
+
+### Coordenação (Recursos)
+
+**MaterialDidatico**
+```python
+- id, nome, tipo, quantidade, disponivel (bool)
+```
+
+**SalaLaboratorio**
+```python
+- id, nome, tipo, capacidade
+```
+
+**ReservaSala**
+```python
+- id, sala_id, usuario_id, data_inicio, data_fim
+```
+
+### Disciplinar
+
+**Advertencia**
+```python
+- id, aluno_id, data, motivo
+```
+
+**Suspensao**
+```python
+- id, aluno_id, data_inicio, data_fim, motivo
+```
+
+### Biblioteca
+
+**Livro**
+```python
+- id, titulo, autor_id, isbn, quantidade_total, quantidade_disponivel
+```
+
+**Emprestimo**
+```python
+- id, livro_id, aluno_id, data_emprestimo, data_devolucao_prevista, data_devolucao_real
+- Padrão: devolução em 14 dias
+```
+
+---
+
+## 💻 Guia de Desenvolvimento
+
+### Estrutura de uma App Django
+
+```
+app_name/
+├── models.py      # Definir modelos (comentado)
+├── admin.py       # Interface de admin
+├── views.py       # Lógica de negócio (comentado)
+├── urls.py        # Rotas (comentado)
+├── forms.py       # Formulários Django (comentado)
+├── serializers.py # Serializadores DRF (comentado)
+├── permissions.py # Permissões customizadas
+├── tests.py       # Testes unitários
+└── migrations/    # Histórico de mudanças no banco
+```
+
+### Criar Nova Feature
+
+```bash
+# 1. Definir modelo em models.py
+class MeuModelo(models.Model):
+    ...
+
+# 2. Criar migração
+python manage.py makemigrations
+
+# 3. Aplicar migração
+python manage.py migrate
+
+# 4. Registrar no admin (admin.py)
+admin.site.register(MeuModelo, MeuModeloAdmin)
+
+# 5. Criar serializer (serializers.py)
+class MeuModeloSerializer(serializers.ModelSerializer):
+    ...
+
+# 6. Criar viewset (views.py)
+class MeuModeloViewSet(viewsets.ModelViewSet):
+    queryset = MeuModelo.objects.all()
+    serializer_class = MeuModeloSerializer
+
+# 7. Registrar rota (urls.py)
+router.register(r'meumodelo', MeuModeloViewSet, basename='meumodelo')
+
+# 8. Testar (tests.py)
+class MeuModeloTests(TestCase):
+    ...
+```
+
+### Boas Práticas
+
+✅ **DO:**
+- Comentar código com docstrings
+- Usar migrations para alterações no banco
+- Criar testes para novas features
+- Usar permissões customizadas
+- Validar dados nos formulários
+
+❌ **DON'T:**
+- Fazer queries sem select_related/prefetch_related
+- Deixar tokens em variáveis globais
+- Colocar lógica no template
+- Criar super users com senhas simples
+- Commitar dados sensíveis no repositório
+
+---
+
+## ✅ Testes
+
+### Rodar Todos os Testes
+
+```bash
+python manage.py test
+```
+
+### Rodar Testes de um App
+
+```bash
+python manage.py test escola.base
+python manage.py test escola.base.tests
+```
+
+### Rodar Teste Específico
+
+```bash
+python manage.py test escola.base.tests.AdminIntegrationTests.test_admin_can_add_user
+```
+
+### Testes Inclusos (base)
+
+✅ `test_custom_user_creation_form_valid` - Criar usuário com form
+✅ `test_duplicate_email_invalid` - Rejeitar email duplicado
+✅ `test_admin_can_add_user` - Criar via admin
+✅ `test_admin_cannot_add_user_with_duplicate_email` - Email duplicado no admin
+✅ `test_admin_missing_password_shows_error` - Senha obrigatória no admin
+
+**Resultado**: 5/5 testes passando ✅
+
+### Cobertura de Testes
+
+```bash
+pip install coverage
+coverage run --source='.' manage.py test
+coverage report
+coverage html  # Gera relatório em htmlcov/
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Erro: "Add user" no Django Admin falha
+
+**Solução**: Já corrigido! O arquivo `admin.py` usa nomes corretos:
+```python
+'fields': ('username', 'email', 'first_name', 'last_name', 'cargo', 'password1', 'password2')
+```
+
+### Erro: CORS bloqueado no Frontend
+
+**Solução**: Verifique `settings.py`:
+```python
+CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
+```
+
+### Erro: "ModuleNotFoundError: No module named 'xyz'"
+
+**Solução**: Instale dependências:
+```bash
+pip install -r requirements.txt
+```
+
+### Erro: Banco de dados não existe
+
+**Solução**: Aplique migrações:
+```bash
+python manage.py migrate
+```
+
+### Erro: Superuser já existe
+
+**Solução**: Delete o banco e recriar:
+```bash
+rm db.sqlite3
+python manage.py migrate
 python manage.py createsuperuser
-Em seguida, acesse: http://localhost:8000/admin
+```
+
+### Frontend não conecta ao backend
+
+**Solução**: Verifique URLs:
+```javascript
+// frontend/src/api.js (ou similar)
+const API_URL = "http://localhost:8000/api";
+```
+
+---
+
+## 📝 Documentação Adicional
+
+### Documentação de Código
+
+Veja `DOCUMENTACAO_COMENTARIOS.md` para:
+- ✅ Explicação detalhada de cada modelo
+- ✅ Documentação de views e endpoints
+- ✅ Exemplos de uso da API
+- ✅ Estrutura de classes e métodos
+- ✅ Relacionamentos entre modelos
+
+### Endpoints Completos
+
+Veja `DOCUMENTACAO_COMENTARIOS.md` seção "Documentação da API" para lista completa.
+
+---
+
+## 🤝 Contribuição
+
+Contribuições são bem-vindas! Para contribuir:
+
+1. **Fork** o repositório
+2. **Crie uma branch** (`git checkout -b feature/minha-feature`)
+3. **Commit** mudanças (`git commit -m 'Add minha-feature'`)
+4. **Push** para a branch (`git push origin feature/minha-feature`)
+5. **Abra um Pull Request**
+
+### Diretrizes
+
+- Código deve estar comentado
+- Adicione testes para novas features
+- Siga o padrão de código existente
+- Atualize documentação se necessário
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob a **MIT License** - veja o arquivo LICENSE para detalhes.
+
+---
+
+## 👥 Autores
+
+- **Desenvolvedor(a) Principal**: Gustavo Lucca, Gabriel Vinhal e Kayo 
+- **Organização**: SESI Garavelo
+- **Data**: Novembro de 2025
+
+### Contato
+
+- 📧 Email: seu-email@example.com
+- 🐙 GitHub: github.com/lucca170/Atividade-TCC-Secretaria
+- 💬 Issues: Use a aba Issues no GitHub
+
+---
+
+## 📊 Estatísticas do Projeto
+
+| Métrica | Valor |
+|---------|-------|
+| **Linhas de Código** | ~5000+ |
+| **Modelos Django** | 12+ |
+| **Endpoints API** | 20+ |
+| **Páginas React** | 15+ |
+| **Testes** | 5 |
+| **Tempo de Desenvolvimento** | TCC |
+
+---
+
+## 🎓 O que Você Aprenderá
+
+Estudando este projeto, você entenderá:
+
+- ✅ Arquitetura full-stack (Frontend + Backend)
+- ✅ Django e Django REST Framework
+- ✅ React com Vite
+- ✅ Autenticação com Tokens
+- ✅ Permissões e controle de acesso
+- ✅ Modelagem de banco de dados relacional
+- ✅ API RESTful design
+- ✅ Testes automatizados
+- ✅ Boas práticas de desenvolvimento
+
+---
+
+## 🔮 Roadmap Futuro
+
+- [ ] Implementar testes E2E (Cypress/Playwright)
+- [ ] Configurar CI/CD (GitHub Actions)
+- [ ] Deploy em Heroku/Railway
+- [ ] Adicionar WebSockets para notificações em tempo real
+- [ ] Implementar 2FA (autenticação dupla)
+- [ ] Adicionar suporte a múltiplas escolas (multi-tenant)
+- [ ] Mobile app (React Native)
+- [ ] Exportar relatórios avançados (Excel, PDF)
+
+---
+
+## 📞 Suporte
+
+Tem dúvidas ou encontrou um bug?
+
+1. **Consulte a documentação**: `DOCUMENTACAO_COMENTARIOS.md`
+2. **Abra uma issue** no GitHub
+3. **Entre em contato** via email
+
+---
+
+## ✨ Agradecimentos
+
+- Django e comunidade Django
+- React e React community
+- Material-UI pelos componentes
+- StackOverflow pela ajuda durante o desenvolvimento
+
+---
+
+**Feito com ❤️ como Trabalho de Conclusão de Curso**
+
+**Status**: ✅ Completado e documentado (11 de novembro de 2025 as 23:43)
